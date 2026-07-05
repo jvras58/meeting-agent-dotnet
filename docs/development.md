@@ -114,7 +114,7 @@ dotnet test
 dotnet run --project src/MeetingAgent.Api
 ```
 
-O Makefile atual também detecta quando está dentro do container para comandos como `make build`, `make test`, `make api` e `make worker`.
+O Makefile também detecta quando está dentro do container para comandos como `make build`, `make test`, `make api`, `make worker`, `make ollama-model` e `make ollama-list`.
 
 ---
 
@@ -330,10 +330,21 @@ AI_MODEL=qwen3:8b
 AI_BASE_URL=http://ollama:11434
 ```
 
-Baixe o modelo:
+O container do Ollama sobe junto com o ambiente, mas ele não vem com modelos baixados. Baixe o modelo padrão com:
 
 ```bash
 make ollama-model
+```
+
+Esse comando funciona tanto no host quanto dentro do `dotnet_dev`.
+
+- No host, ele usa Docker Compose para executar `ollama pull` no container do Ollama.
+- Dentro do `dotnet_dev`, ele usa a API HTTP interna do Ollama.
+
+Para baixar outro modelo:
+
+```bash
+make ollama-model OLLAMA_MODEL=qwen3:4b
 ```
 
 Liste modelos disponíveis:
@@ -466,6 +477,7 @@ Dentro do container:
 make restore
 make build
 make test
+make ollama-model
 make api-watch
 ```
 
