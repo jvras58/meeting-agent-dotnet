@@ -1,4 +1,6 @@
 COMPOSE_DEV=docker compose -f compose.dev.yml
+OLLAMA_MODEL ?= qwen3:8b
+OLLAMA_BASE_URL ?= http://ollama:11434
 
 up:
 	$(COMPOSE_DEV) up -d
@@ -84,7 +86,17 @@ worker-watch:
 	fi
 
 ollama-model:
-	$(COMPOSE_DEV) exec ollama ollama pull qwen3:8b
+	@if [ -f /.dockerenv ]; then \
+		curl -fsS $(OLLAMA_BASE_URL)/api/pull \
+			-H "Content-Type: application/json" \
+			-d '{"name":"$(OLLAMA_MODEL)","stream":false}'; \
+	else \
+		$(COMPOSE_DEV) exec ollama ollama pull $(OLLAMA_MODEL); \
+	fi
 
 ollama-list:
-	$(COMPOSE_DEV) exec ollama ollama list
+	@if [ -f /.dockerenv ]; then \
+		curl -fsS $(OLLAMA_BASE_URL)/api/tags; \
+	else \
+		$(COMPOSE_DEV) exec ollama ollama list; \
+	fi
