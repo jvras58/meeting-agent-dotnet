@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton<TextNoiseCleaner>();
         services.AddSingleton<TranscriptNormalizer>();
         services.AddSingleton<HeuristicSummaryBuilder>();
+        services.AddSingleton<AiMeetingSummaryBuilder>();
         services.AddSingleton<MarkdownSummaryRenderer>();
         services.AddSingleton<MeetingSummaryWorkflow>();
         services.AddScoped<ImportMeetingUseCase>();

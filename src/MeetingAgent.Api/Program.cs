@@ -11,6 +11,9 @@ DotEnv.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddEnvironmentVariables();
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -19,6 +22,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+
+startupLogger.LogInformation(
+    "MeetingAgent.Api started. Environment={Environment}, AiProvider={AiProvider}, AiModel={AiModel}.",
+    app.Environment.EnvironmentName,
+    app.Configuration["AI_PROVIDER"] ?? "heuristic",
+    app.Configuration["AI_MODEL"] ?? "qwen3:8b");
 
 if (app.Environment.IsDevelopment())
 {
@@ -40,6 +50,7 @@ app.MapPost("/webhooks/graph", async (HttpRequest request, ILoggerFactory logger
 
     if (request.Query.TryGetValue("validationToken", out var validationToken))
     {
+        logger.LogInformation("Graph webhook validation requested.");
         return Results.Text(validationToken.ToString(), "text/plain");
     }
 
@@ -52,8 +63,11 @@ app.MapPost("/webhooks/graph", async (HttpRequest request, ILoggerFactory logger
 })
 .WithName("GraphWebhook");
 
-app.MapPost("/meetings/import", async (ImportMeetingRequest input, ImportMeetingUseCase useCase, CancellationToken cancellationToken) =>
+app.MapPost("/meetings/import", async (ImportMeetingRequest input, ImportMeetingUseCase useCase, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
 {
+    var logger = loggerFactory.CreateLogger("ImportMeetingEndpoint");
+    logger.LogInformation("Import meeting request received. Title={Title}, Source={Source}.", input.Title, input.Source ?? "manual");
+
     var id = await useCase.ExecuteAsync(input, cancellationToken);
     return Results.Created($"/meetings/{id}", new { id });
 })
@@ -93,8 +107,11 @@ app.MapGet("/meetings/{id:guid}", async (Guid id, IMeetingRepository repository,
 })
 .WithName("GetMeeting");
 
-app.MapPost("/meetings/{id:guid}/process", async (Guid id, ProcessMeetingUseCase useCase, CancellationToken cancellationToken) =>
+app.MapPost("/meetings/{id:guid}/process", async (Guid id, ProcessMeetingUseCase useCase, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
 {
+    var logger = loggerFactory.CreateLogger("ProcessMeetingEndpoint");
+    logger.LogInformation("Process meeting request received. MeetingId={MeetingId}.", id);
+
     await useCase.ExecuteAsync(id, "text", cancellationToken);
     return Results.Accepted($"/meetings/{id}/summary");
 })

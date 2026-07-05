@@ -3,6 +3,7 @@ using MeetingAgent.Application.Workflows;
 using MeetingAgent.Contracts.Requests;
 using MeetingAgent.Domain.Meetings;
 using MeetingAgent.Domain.Transcripts;
+using Microsoft.Extensions.Logging;
 
 namespace MeetingAgent.Application.UseCases;
 
@@ -12,17 +13,20 @@ public sealed class ImportMeetingUseCase
     private readonly ITranscriptRepository _transcriptRepository;
     private readonly ISummaryRepository _summaryRepository;
     private readonly MeetingSummaryWorkflow _workflow;
+    private readonly ILogger<ImportMeetingUseCase> _logger;
 
     public ImportMeetingUseCase(
         IMeetingRepository meetingRepository,
         ITranscriptRepository transcriptRepository,
         ISummaryRepository summaryRepository,
-        MeetingSummaryWorkflow workflow)
+        MeetingSummaryWorkflow workflow,
+        ILogger<ImportMeetingUseCase> logger)
     {
         _meetingRepository = meetingRepository;
         _transcriptRepository = transcriptRepository;
         _summaryRepository = summaryRepository;
         _workflow = workflow;
+        _logger = logger;
     }
 
     public async Task<Guid> ExecuteAsync(ImportMeetingRequest request, CancellationToken cancellationToken = default)
@@ -31,6 +35,14 @@ public sealed class ImportMeetingUseCase
         {
             throw new ArgumentException("RawTranscript is required.", nameof(request));
         }
+
+        _logger.LogInformation(
+            "Importing meeting. Title={Title}, ExternalMeetingId={ExternalMeetingId}, Source={Source}, SourceFormat={SourceFormat}, RawTranscriptLength={RawTranscriptLength}.",
+            request.Title,
+            request.ExternalMeetingId,
+            request.Source ?? "manual",
+            request.SourceFormat ?? "auto",
+            request.RawTranscript.Length);
 
         var meeting = Meeting.Create(
             request.Title,
@@ -48,7 +60,7 @@ public sealed class ImportMeetingUseCase
             request.RawTranscript);
 
         meeting.MarkTranscriptImported();
-        var summary = _workflow.Execute(meeting, transcript, request.SourceFormat);
+        var summary = await _workflow.ExecuteAsync(meeting, transcript, request.SourceFormat, cancellationToken);
 
         await _meetingRepository.AddAsync(meeting, cancellationToken);
         await _transcriptRepository.AddAsync(transcript, cancellationToken);
@@ -56,6 +68,11 @@ public sealed class ImportMeetingUseCase
         await _meetingRepository.SaveChangesAsync(cancellationToken);
         await _transcriptRepository.SaveChangesAsync(cancellationToken);
         await _summaryRepository.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Meeting imported and summarized. MeetingId={MeetingId}, SummaryId={SummaryId}.",
+            meeting.Id,
+            summary.Id);
 
         return meeting.Id;
     }
