@@ -1,0 +1,68 @@
+services:
+  dotnet_dev:
+    build:
+      context: ./.devcontainer
+      dockerfile: Dockerfile
+    container_name: meeting-agent-dotnet-dev
+    volumes:
+      - ./:/workspace:cached
+    working_dir: /workspace
+    command: tail -f /dev/null
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+    networks:
+      - meeting-agent-net
+
+  postgres:
+    image: postgres:16
+    container_name: meeting-agent-postgres
+    environment:
+      POSTGRES_DB: meeting_agent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - meeting_agent_postgres:/var/lib/postgresql/data
+    networks:
+      - meeting-agent-net
+
+  redis:
+    image: redis:7
+    container_name: meeting-agent-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - meeting-agent-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: meeting-agent-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - meeting-agent-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: meeting-agent-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - meeting_agent_ollama:/root/.ollama
+    networks:
+      - meeting-agent-net
+
+networks:
+  meeting-agent-net:
+
+volumes:
+  meeting_agent_postgres:
+  meeting_agent_ollama:

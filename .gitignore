@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+*.rsuser
+.vs/
+.vscode/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Local storage
+data/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: meeting-agent-postgres
+    environment:
+      POSTGRES_DB: meeting_agent
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - meeting_agent_postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: meeting-agent-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: meeting-agent-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: meeting-agent-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - meeting_agent_ollama:/root/.ollama
+
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: meeting-agent-aspire-dashboard
+    ports:
+      - "18888:18888"
+      - "4317:18889"
+
+volumes:
+  meeting_agent_postgres:
+  meeting_agent_ollama:
