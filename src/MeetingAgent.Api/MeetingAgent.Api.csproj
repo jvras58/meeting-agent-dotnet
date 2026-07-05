@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\MeetingAgent.Application\MeetingAgent.Application.csproj" />
+    <ProjectReference Include="..\MeetingAgent.Infrastructure\MeetingAgent.Infrastructure.csproj" />
+    <ProjectReference Include="..\MeetingAgent.Contracts\MeetingAgent.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+  </ItemGroup>
+</Project>
