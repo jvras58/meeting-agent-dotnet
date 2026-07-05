@@ -1,0 +1,8 @@
+{
+  "title": "Reunião de planejamento do Meeting Agent",
+  "source": "manual",
+  "sourceFormat": "text",
+  "language": "pt-BR",
+  "organizerEmail": "meeting-agent@empresa.com",
+  "rawTranscript": "João: Pessoal, hoje vamos alinhar o MVP do agente de reuniões. Maria: Decidimos começar pela transcrição oficial do Teams via Graph para reduzir complexidade. Pedro: Eu fico responsável por implementar o endpoint de webhook e validar as permissões do Graph. Maria: Temos um risco de a política do tenant não permitir transcrição automática. João: Então a pendência é falar com o admin do Microsoft 365 e validar as permissões. Pedro: Alguém sabe se vamos publicar a ata no chat do Teams? João: Isso fica para a fase 3."
+}
