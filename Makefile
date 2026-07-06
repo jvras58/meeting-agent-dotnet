@@ -1,4 +1,5 @@
 COMPOSE_DEV=docker compose -f compose.dev.yml
+API_URL ?= http://0.0.0.0:5080
 OLLAMA_MODEL ?= qwen3:8b
 OLLAMA_BASE_URL ?= http://ollama:11434
 
@@ -59,16 +60,16 @@ test:
 
 api:
 	@if [ -f /.dockerenv ]; then \
-		dotnet run --project src/MeetingAgent.Api; \
+		dotnet run --project src/MeetingAgent.Api --no-launch-profile --urls $(API_URL); \
 	else \
-		$(COMPOSE_DEV) exec dotnet_dev dotnet run --project src/MeetingAgent.Api; \
+		$(COMPOSE_DEV) exec dotnet_dev dotnet run --project src/MeetingAgent.Api --no-launch-profile --urls $(API_URL); \
 	fi
 
 api-watch:
 	@if [ -f /.dockerenv ]; then \
-		dotnet watch --project src/MeetingAgent.Api run; \
+		dotnet watch --project src/MeetingAgent.Api run --no-launch-profile --urls $(API_URL); \
 	else \
-		$(COMPOSE_DEV) exec dotnet_dev dotnet watch --project src/MeetingAgent.Api run; \
+		$(COMPOSE_DEV) exec dotnet_dev dotnet watch --project src/MeetingAgent.Api run --no-launch-profile --urls $(API_URL); \
 	fi
 
 worker:
