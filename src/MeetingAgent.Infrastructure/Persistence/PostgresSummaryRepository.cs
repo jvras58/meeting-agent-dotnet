@@ -66,8 +66,8 @@ public sealed class PostgresSummaryRepository : ISummaryRepository
                 action_items_json, risks_json, open_questions_json, created_at, updated_at
             )
             VALUES (
-                @id, @meeting_id, @executive_summary, @markdown, @main_points_json::jsonb, @decisions_json::jsonb,
-                @action_items_json::jsonb, @risks_json::jsonb, @open_questions_json::jsonb, @created_at, @updated_at
+                @id, @meeting_id, @executive_summary, @markdown, CAST(@main_points_json AS jsonb), CAST(@decisions_json AS jsonb),
+                CAST(@action_items_json AS jsonb), CAST(@risks_json AS jsonb), CAST(@open_questions_json AS jsonb), @created_at, @updated_at
             )
             ON CONFLICT (meeting_id) DO UPDATE SET
                 executive_summary = EXCLUDED.executive_summary,
