@@ -77,6 +77,12 @@ public sealed class AiMeetingSummaryBuilder
                 "AI summary response could not be parsed as expected JSON. Falling back to heuristic summary. ResponseLength={ResponseLength}.",
                 response.Length);
         }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogWarning(
+                exception,
+                "AI summary service timed out or canceled internally. Falling back to heuristic summary.");
+        }
         catch (OperationCanceledException)
         {
             throw;
