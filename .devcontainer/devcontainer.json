@@ -1,34 +1,9 @@
 {
   "name": "Meeting Agent .NET",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": "."
-  },
-  "remoteUser": "dotnet_usr",
+  "dockerComposeFile": "../compose.dev.yml",
+  "service": "dotnet_dev",
   "workspaceFolder": "/workspace",
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
-  ],
-  "forwardPorts": [
-    5000,
-    5001,
-    5432,
-    6379,
-    5672,
-    15672,
-    11434,
-    18888
-  ],
-  "postCreateCommand": "dotnet restore || true",
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "ms-dotnettools.csharp",
-        "ms-dotnettools.csdevkit",
-        "ms-azuretools.vscode-docker",
-        "EditorConfig.EditorConfig",
-        "eamodio.gitlens"
-      ]
-    }
-  }
+  "remoteUser": "dotnet_usr",
+  "forwardPorts": [5080, 5432, 6379, 5672, 15672, 11434],
+  "postCreateCommand": "dotnet restore || true"
 }
