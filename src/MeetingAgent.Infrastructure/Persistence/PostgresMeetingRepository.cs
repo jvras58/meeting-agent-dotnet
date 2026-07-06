@@ -1,6 +1,7 @@
 using MeetingAgent.Application.Ports;
 using MeetingAgent.Domain.Meetings;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace MeetingAgent.Infrastructure.Persistence;
 
@@ -101,14 +102,14 @@ public sealed class PostgresMeetingRepository : IMeetingRepository
 
             command.Parameters.AddWithValue("id", meeting.Id);
             command.Parameters.AddWithValue("title", meeting.Title);
-            command.Parameters.AddWithValue("external_meeting_id", DbValue(meeting.ExternalMeetingId));
-            command.Parameters.AddWithValue("online_meeting_id", DbValue(meeting.OnlineMeetingId));
-            command.Parameters.AddWithValue("join_web_url", DbValue(meeting.JoinWebUrl));
-            command.Parameters.AddWithValue("organizer_email", DbValue(meeting.OrganizerEmail));
-            command.Parameters.AddWithValue("start_time", DbValue(meeting.StartTime));
-            command.Parameters.AddWithValue("end_time", DbValue(meeting.EndTime));
+            AddNullableText(command, "external_meeting_id", meeting.ExternalMeetingId);
+            AddNullableText(command, "online_meeting_id", meeting.OnlineMeetingId);
+            AddNullableText(command, "join_web_url", meeting.JoinWebUrl);
+            AddNullableText(command, "organizer_email", meeting.OrganizerEmail);
+            AddNullableTimestamp(command, "start_time", meeting.StartTime);
+            AddNullableTimestamp(command, "end_time", meeting.EndTime);
             command.Parameters.AddWithValue("status", (int)meeting.Status);
-            command.Parameters.AddWithValue("failure_reason", DbValue(meeting.FailureReason));
+            AddNullableText(command, "failure_reason", meeting.FailureReason);
             command.Parameters.AddWithValue("created_at", meeting.CreatedAt);
             command.Parameters.AddWithValue("updated_at", meeting.UpdatedAt);
 
@@ -135,5 +136,19 @@ public sealed class PostgresMeetingRepository : IMeetingRepository
             reader.GetFieldValue<DateTimeOffset>(11));
     }
 
-    private static object DbValue(object? value) => value ?? DBNull.Value;
+    private static void AddNullableText(NpgsqlCommand command, string name, string? value)
+    {
+        command.Parameters.Add(new NpgsqlParameter(name, NpgsqlDbType.Text)
+        {
+            Value = string.IsNullOrWhiteSpace(value) ? DBNull.Value : value
+        });
+    }
+
+    private static void AddNullableTimestamp(NpgsqlCommand command, string name, DateTimeOffset? value)
+    {
+        command.Parameters.Add(new NpgsqlParameter(name, NpgsqlDbType.TimestampTz)
+        {
+            Value = value.HasValue ? value.Value : DBNull.Value
+        });
+    }
 }
