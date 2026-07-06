@@ -46,9 +46,41 @@ public sealed class Meeting : Entity
         return new Meeting(Guid.NewGuid(), title, externalMeetingId, onlineMeetingId, joinWebUrl, organizerEmail, startTime, endTime);
     }
 
+    public static Meeting Restore(
+        Guid id,
+        string title,
+        string? externalMeetingId,
+        string? onlineMeetingId,
+        string? joinWebUrl,
+        string? organizerEmail,
+        DateTimeOffset? startTime,
+        DateTimeOffset? endTime,
+        MeetingStatus status,
+        string? failureReason,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt)
+    {
+        var meeting = new Meeting(id, title, externalMeetingId, onlineMeetingId, joinWebUrl, organizerEmail, startTime, endTime)
+        {
+            Status = status,
+            FailureReason = failureReason,
+            CreatedAt = createdAt,
+            UpdatedAt = updatedAt
+        };
+
+        return meeting;
+    }
+
     public void MarkTranscriptImported()
     {
         Status = MeetingStatus.TranscriptImported;
+        FailureReason = null;
+        Touch();
+    }
+
+    public void MarkQueued()
+    {
+        Status = MeetingStatus.Queued;
         FailureReason = null;
         Touch();
     }
