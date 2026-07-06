@@ -4,7 +4,8 @@ public enum MeetingStatus
 {
     Created = 0,
     TranscriptImported = 1,
-    Processing = 2,
-    SummaryGenerated = 3,
-    Failed = 4
+    Queued = 2,
+    Processing = 3,
+    SummaryGenerated = 4,
+    Failed = 5
 }
