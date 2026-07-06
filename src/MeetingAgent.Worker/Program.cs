@@ -1,5 +1,6 @@
 using MeetingAgent.Infrastructure.Configuration;
 using MeetingAgent.Application;
+using MeetingAgent.Application.Ports;
 using MeetingAgent.Infrastructure;
 using MeetingAgent.Worker;
 
@@ -17,6 +18,12 @@ builder.Services.AddHostedService<MeetingProcessingWorker>();
 
 var host = builder.Build();
 var startupLogger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+
+var storageInitializer = host.Services.GetService<IStorageInitializer>();
+if (storageInitializer is not null)
+{
+    await storageInitializer.InitializeAsync();
+}
 
 startupLogger.LogInformation(
     "MeetingAgent.Worker started. Environment={Environment}, AiProvider={AiProvider}, AiModel={AiModel}.",
