@@ -58,7 +58,7 @@ public sealed class PostgresTranscriptRepository : ITranscriptRepository
             await using var command = connection.CreateCommand();
             command.CommandText = """
             INSERT INTO transcripts (id, meeting_id, source, language, raw_content, status, segments_json, created_at, updated_at)
-            VALUES (@id, @meeting_id, @source, @language, @raw_content, @status, @segments_json::jsonb, @created_at, @updated_at)
+            VALUES (@id, @meeting_id, @source, @language, @raw_content, @status, CAST(@segments_json AS jsonb), @created_at, @updated_at)
             ON CONFLICT (meeting_id) DO UPDATE SET
                 source = EXCLUDED.source,
                 language = EXCLUDED.language,
