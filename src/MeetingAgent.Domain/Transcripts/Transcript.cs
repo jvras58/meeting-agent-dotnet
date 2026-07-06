@@ -29,6 +29,28 @@ public sealed class Transcript : Entity
         return new Transcript(Guid.NewGuid(), meetingId, source, language, rawContent);
     }
 
+    public static Transcript Restore(
+        Guid id,
+        Guid meetingId,
+        string source,
+        string language,
+        string rawContent,
+        TranscriptStatus status,
+        IEnumerable<TranscriptSegment>? segments,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt)
+    {
+        var transcript = new Transcript(id, meetingId, source, language, rawContent)
+        {
+            Status = status,
+            CreatedAt = createdAt,
+            UpdatedAt = updatedAt
+        };
+
+        transcript._segments.AddRange(segments ?? []);
+        return transcript;
+    }
+
     public void ReplaceSegments(IEnumerable<TranscriptSegment> segments)
     {
         _segments.Clear();
