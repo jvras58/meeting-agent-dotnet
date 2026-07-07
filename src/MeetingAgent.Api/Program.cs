@@ -2,6 +2,7 @@ using MeetingAgent.Infrastructure.Configuration;
 using MeetingAgent.Application;
 using MeetingAgent.Application.Ports;
 using MeetingAgent.Application.UseCases;
+using MeetingAgent.Contracts.Events;
 using MeetingAgent.Contracts.Requests;
 using MeetingAgent.Contracts.Responses;
 using MeetingAgent.Infrastructure;
@@ -113,13 +114,27 @@ app.MapGet("/meetings/{id:guid}", async (Guid id, IMeetingRepository repository,
 })
 .WithName("GetMeeting");
 
-app.MapPost("/meetings/{id:guid}/process", async (Guid id, ProcessMeetingUseCase useCase, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+app.MapPost("/meetings/{id:guid}/process", async (
+    Guid id,
+    IMeetingRepository meetingRepository,
+    IMeetingProcessingJobPublisher jobPublisher,
+    ILoggerFactory loggerFactory,
+    CancellationToken cancellationToken) =>
 {
     var logger = loggerFactory.CreateLogger("ProcessMeetingEndpoint");
-    logger.LogInformation("Process meeting request received. MeetingId={MeetingId}.", id);
+    logger.LogInformation("Queue process meeting request received. MeetingId={MeetingId}.", id);
 
-    await useCase.ExecuteAsync(id, "text", cancellationToken);
-    return Results.Accepted($"/meetings/{id}/summary");
+    var meeting = await meetingRepository.GetByIdAsync(id, cancellationToken);
+    if (meeting is null) return Results.NotFound();
+
+    meeting.MarkQueued();
+    await meetingRepository.SaveChangesAsync(cancellationToken);
+
+    await jobPublisher.PublishAsync(
+        new MeetingProcessingRequested(id, "text", DateTimeOffset.UtcNow),
+        cancellationToken);
+
+    return Results.Accepted($"/meetings/{id}/summary", new { id, status = "Queued" });
 })
 .WithName("ProcessMeeting");
 
