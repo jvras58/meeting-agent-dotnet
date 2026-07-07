@@ -26,13 +26,26 @@ logs-worker:
 	@echo "O Worker normalmente roda via dotnet run/dotnet watch dentro do container; veja o terminal onde ele foi iniciado."
 
 logs-ollama:
-	$(COMPOSE_DEV) logs -f ollama
+	@if [ -f /.dockerenv ]; then \
+		echo "Dentro do devcontainer não usamos docker logs. Testando Ollama via HTTP em $(OLLAMA_BASE_URL)..."; \
+		curl -fsS $(OLLAMA_BASE_URL)/api/tags; \
+	else \
+		$(COMPOSE_DEV) logs -f ollama; \
+	fi
 
 logs-rabbitmq:
-	$(COMPOSE_DEV) logs -f rabbitmq
+	@if [ -f /.dockerenv ]; then \
+		echo "Dentro do devcontainer, acesse RabbitMQ Management em http://localhost:15672 ou use curl -u guest:guest http://rabbitmq:15672/api/overview"; \
+	else \
+		$(COMPOSE_DEV) logs -f rabbitmq; \
+	fi
 
 logs-postgres:
-	$(COMPOSE_DEV) logs -f postgres
+	@if [ -f /.dockerenv ]; then \
+		echo "Dentro do devcontainer, teste o banco via DNS: getent hosts postgres"; \
+	else \
+		$(COMPOSE_DEV) logs -f postgres; \
+	fi
 
 shell:
 	$(COMPOSE_DEV) exec dotnet_dev zsh
@@ -101,3 +114,8 @@ ollama-list:
 	else \
 		$(COMPOSE_DEV) exec ollama ollama list; \
 	fi
+
+ollama-smoke:
+	@curl -fsS $(OLLAMA_BASE_URL)/api/chat \
+		-H "Content-Type: application/json" \
+		-d '{"model":"$(OLLAMA_MODEL)","stream":false,"messages":[{"role":"user","content":"Responda apenas: ok"}]}'

@@ -6,4 +6,5 @@ public sealed class AiOptions
     public string Provider { get; set; } = "heuristic";
     public string Model { get; set; } = "qwen3:8b";
     public string BaseUrl { get; set; } = "http://localhost:11434";
+    public int TimeoutSeconds { get; set; } = 300;
 }

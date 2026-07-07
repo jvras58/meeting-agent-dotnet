@@ -39,13 +39,24 @@ public sealed class ProcessMeetingUseCase
         var transcript = await _transcriptRepository.GetByMeetingIdAsync(meetingId, cancellationToken)
             ?? throw new InvalidOperationException($"Transcript for meeting {meetingId} not found.");
 
-        var summary = await _workflow.ExecuteAsync(meeting, transcript, sourceFormat, cancellationToken);
-        await _summaryRepository.AddOrReplaceAsync(summary, cancellationToken);
-        await _summaryRepository.SaveChangesAsync(cancellationToken);
+        try
+        {
+            var summary = await _workflow.ExecuteAsync(meeting, transcript, sourceFormat, cancellationToken);
+            await _summaryRepository.AddOrReplaceAsync(summary, cancellationToken);
+            await _transcriptRepository.SaveChangesAsync(cancellationToken);
+            await _summaryRepository.SaveChangesAsync(cancellationToken);
+            await _meetingRepository.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation(
-            "Existing meeting processed. MeetingId={MeetingId}, SummaryId={SummaryId}.",
-            meetingId,
-            summary.Id);
+            _logger.LogInformation(
+                "Existing meeting processed. MeetingId={MeetingId}, SummaryId={SummaryId}.",
+                meetingId,
+                summary.Id);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            meeting.MarkFailed(exception.Message);
+            await _meetingRepository.SaveChangesAsync(cancellationToken);
+            throw;
+        }
     }
 }

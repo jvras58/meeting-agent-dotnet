@@ -2,6 +2,13 @@
   "name": "Meeting Agent .NET",
   "dockerComposeFile": "../compose.dev.yml",
   "service": "dotnet_dev",
+  "runServices": [
+    "dotnet_dev",
+    "postgres",
+    "redis",
+    "rabbitmq",
+    "ollama"
+  ],
   "workspaceFolder": "/workspace",
   "remoteUser": "dotnet_usr",
   "forwardPorts": [5080, 5432, 6379, 5672, 15672, 11434],

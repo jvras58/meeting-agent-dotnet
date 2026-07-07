@@ -24,6 +24,12 @@ builder.Services.AddProblemDetails();
 var app = builder.Build();
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 
+var storageInitializer = app.Services.GetService<IStorageInitializer>();
+if (storageInitializer is not null)
+{
+    await storageInitializer.InitializeAsync();
+}
+
 startupLogger.LogInformation(
     "MeetingAgent.Api started. Environment={Environment}, AiProvider={AiProvider}, AiModel={AiModel}.",
     app.Environment.EnvironmentName,
@@ -69,7 +75,7 @@ app.MapPost("/meetings/import", async (ImportMeetingRequest input, ImportMeeting
     logger.LogInformation("Import meeting request received. Title={Title}, Source={Source}.", input.Title, input.Source ?? "manual");
 
     var id = await useCase.ExecuteAsync(input, cancellationToken);
-    return Results.Created($"/meetings/{id}", new { id });
+    return Results.Accepted($"/meetings/{id}/summary", new { id, status = "Queued" });
 })
 .WithName("ImportMeeting");
 

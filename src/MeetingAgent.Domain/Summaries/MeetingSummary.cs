@@ -45,4 +45,31 @@ public sealed class MeetingSummary : Entity
         summary._openQuestions.AddRange(openQuestions ?? []);
         return summary;
     }
+
+    public static MeetingSummary Restore(
+        Guid id,
+        Guid meetingId,
+        string executiveSummary,
+        string markdown,
+        IEnumerable<string>? mainPoints,
+        IEnumerable<Decision>? decisions,
+        IEnumerable<ActionItem>? actionItems,
+        IEnumerable<Risk>? risks,
+        IEnumerable<string>? openQuestions,
+        DateTimeOffset createdAt,
+        DateTimeOffset updatedAt)
+    {
+        var summary = new MeetingSummary(id, meetingId, executiveSummary, markdown)
+        {
+            CreatedAt = createdAt,
+            UpdatedAt = updatedAt
+        };
+
+        summary._mainPoints.AddRange(mainPoints ?? []);
+        summary._decisions.AddRange(decisions ?? []);
+        summary._actionItems.AddRange(actionItems ?? []);
+        summary._risks.AddRange(risks ?? []);
+        summary._openQuestions.AddRange(openQuestions ?? []);
+        return summary;
+    }
 }
