@@ -45,6 +45,10 @@ public static class DependencyInjection
             options.User = configuration["RABBITMQ_USER"] ?? configuration[$"{RabbitMqOptions.SectionName}:User"] ?? "guest";
             options.Password = configuration["RABBITMQ_PASSWORD"] ?? configuration[$"{RabbitMqOptions.SectionName}:Password"] ?? "guest";
             options.QueueName = configuration["RABBITMQ_QUEUE"] ?? configuration[$"{RabbitMqOptions.SectionName}:QueueName"] ?? "meeting.processing.requested";
+            options.DeadLetterQueueName = configuration["RABBITMQ_DEAD_LETTER_QUEUE"] ?? configuration[$"{RabbitMqOptions.SectionName}:DeadLetterQueueName"] ?? "meeting.processing.dead-letter";
+            options.MaxRetryAttempts = GetInt(configuration, "RABBITMQ_MAX_RETRY_ATTEMPTS", $"{RabbitMqOptions.SectionName}:MaxRetryAttempts", 3);
+            options.RetryDelaySeconds = GetInt(configuration, "RABBITMQ_RETRY_DELAY_SECONDS", $"{RabbitMqOptions.SectionName}:RetryDelaySeconds", 5);
+            options.OutboxBatchSize = GetInt(configuration, "OUTBOX_BATCH_SIZE", $"{RabbitMqOptions.SectionName}:OutboxBatchSize", 10);
         });
 
         services.AddSingleton<IClock, SystemClock>();
@@ -55,6 +59,7 @@ public static class DependencyInjection
             services.AddSingleton<IMeetingRepository, InMemoryMeetingRepository>();
             services.AddSingleton<ITranscriptRepository, InMemoryTranscriptRepository>();
             services.AddSingleton<ISummaryRepository, InMemorySummaryRepository>();
+            services.AddSingleton<IMeetingProcessingRequestStore, InMemoryMeetingProcessingRequestStore>();
         }
         else
         {
@@ -63,6 +68,8 @@ public static class DependencyInjection
             services.AddScoped<IMeetingRepository, PostgresMeetingRepository>();
             services.AddScoped<ITranscriptRepository, PostgresTranscriptRepository>();
             services.AddScoped<ISummaryRepository, PostgresSummaryRepository>();
+            services.AddScoped<IMeetingProcessingRequestStore, PostgresMeetingProcessingRequestStore>();
+            services.AddScoped<IMeetingProcessingOutboxRepository, PostgresMeetingProcessingOutboxRepository>();
         }
 
         services.AddSingleton<IMeetingProcessingJobPublisher, RabbitMqMeetingProcessingJobPublisher>();

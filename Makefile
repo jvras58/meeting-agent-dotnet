@@ -2,6 +2,7 @@ COMPOSE_DEV=docker compose -f compose.dev.yml
 API_URL ?= http://0.0.0.0:5080
 OLLAMA_MODEL ?= qwen3:8b
 OLLAMA_BASE_URL ?= http://ollama:11434
+TEST_DATABASE_URL ?= Host=postgres;Port=5432;Database=meeting_agent;Username=postgres;Password=postgres
 
 up:
 	$(COMPOSE_DEV) up -d
@@ -69,6 +70,13 @@ test:
 		dotnet test; \
 	else \
 		$(COMPOSE_DEV) exec dotnet_dev dotnet test; \
+	fi
+
+test-integration:
+	@if [ -f /.dockerenv ]; then \
+		TEST_DATABASE_URL="$(TEST_DATABASE_URL)" dotnet test; \
+	else \
+		$(COMPOSE_DEV) exec -e TEST_DATABASE_URL="$(TEST_DATABASE_URL)" dotnet_dev dotnet test; \
 	fi
 
 api:

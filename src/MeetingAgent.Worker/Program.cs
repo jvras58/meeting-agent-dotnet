@@ -16,6 +16,12 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHostedService<MeetingProcessingWorker>();
 
+var databaseProvider = builder.Configuration["DATABASE_PROVIDER"] ?? "postgres";
+if (!string.Equals(databaseProvider, "memory", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddHostedService<OutboxPublisherWorker>();
+}
+
 var host = builder.Build();
 var startupLogger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 

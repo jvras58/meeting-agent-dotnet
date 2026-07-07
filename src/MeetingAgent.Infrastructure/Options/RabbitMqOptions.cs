@@ -8,4 +8,8 @@ public sealed class RabbitMqOptions
     public string User { get; set; } = "guest";
     public string Password { get; set; } = "guest";
     public string QueueName { get; set; } = "meeting.processing.requested";
+    public string DeadLetterQueueName { get; set; } = "meeting.processing.dead-letter";
+    public int MaxRetryAttempts { get; set; } = 3;
+    public int RetryDelaySeconds { get; set; } = 5;
+    public int OutboxBatchSize { get; set; } = 10;
 }
