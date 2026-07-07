@@ -22,14 +22,14 @@ public static class DependencyInjection
             options.BaseUrl = configuration["GRAPH_BASE_URL"] ?? configuration[$"{GraphOptions.SectionName}:BaseUrl"] ?? "https://graph.microsoft.com/v1.0";
         });
 
+        var aiTimeoutSeconds = GetInt(configuration, "AI_TIMEOUT_SECONDS", $"{AiOptions.SectionName}:TimeoutSeconds", 300);
+
         services.Configure<AiOptions>(options =>
         {
             options.Provider = configuration["AI_PROVIDER"] ?? configuration[$"{AiOptions.SectionName}:Provider"] ?? "heuristic";
             options.Model = configuration["AI_MODEL"] ?? configuration[$"{AiOptions.SectionName}:Model"] ?? "qwen3:8b";
             options.BaseUrl = configuration["AI_BASE_URL"] ?? configuration[$"{AiOptions.SectionName}:BaseUrl"] ?? "http://ollama:11434";
-            options.TimeoutSeconds = int.TryParse(configuration["AI_TIMEOUT_SECONDS"] ?? configuration[$"{AiOptions.SectionName}:TimeoutSeconds"], out var timeoutSeconds)
-                ? timeoutSeconds
-                : 300;
+            options.TimeoutSeconds = aiTimeoutSeconds;
         });
 
         services.Configure<DatabaseOptions>(options =>
@@ -41,7 +41,7 @@ public static class DependencyInjection
         services.Configure<RabbitMqOptions>(options =>
         {
             options.Host = configuration["RABBITMQ_HOST"] ?? configuration[$"{RabbitMqOptions.SectionName}:Host"] ?? "rabbitmq";
-            options.Port = int.TryParse(configuration["RABBITMQ_PORT"] ?? configuration[$"{RabbitMqOptions.SectionName}:Port"], out var port) ? port : 5672;
+            options.Port = GetInt(configuration, "RABBITMQ_PORT", $"{RabbitMqOptions.SectionName}:Port", 5672);
             options.User = configuration["RABBITMQ_USER"] ?? configuration[$"{RabbitMqOptions.SectionName}:User"] ?? "guest";
             options.Password = configuration["RABBITMQ_PASSWORD"] ?? configuration[$"{RabbitMqOptions.SectionName}:Password"] ?? "guest";
             options.QueueName = configuration["RABBITMQ_QUEUE"] ?? configuration[$"{RabbitMqOptions.SectionName}:QueueName"] ?? "meeting.processing.requested";
@@ -76,12 +76,9 @@ public static class DependencyInjection
             services.AddHttpClient<IAiChatService, OllamaChatService>((sp, client) =>
             {
                 var baseUrl = configuration["AI_BASE_URL"] ?? "http://ollama:11434";
-                var timeoutSeconds = int.TryParse(configuration["AI_TIMEOUT_SECONDS"], out var parsedTimeoutSeconds)
-                    ? parsedTimeoutSeconds
-                    : 300;
 
                 client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromSeconds(Math.Max(30, timeoutSeconds));
+                client.Timeout = TimeSpan.FromSeconds(Math.Max(30, aiTimeoutSeconds));
             });
         }
         else
@@ -90,5 +87,12 @@ public static class DependencyInjection
         }
 
         return services;
+    }
+
+    private static int GetInt(IConfiguration configuration, string environmentKey, string configurationKey, int defaultValue)
+    {
+        return int.TryParse(configuration[environmentKey] ?? configuration[configurationKey], out var value)
+            ? value
+            : defaultValue;
     }
 }
