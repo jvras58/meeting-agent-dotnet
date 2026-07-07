@@ -116,23 +116,19 @@ app.MapGet("/meetings/{id:guid}", async (Guid id, IMeetingRepository repository,
 
 app.MapPost("/meetings/{id:guid}/process", async (
     Guid id,
-    IMeetingRepository meetingRepository,
-    IMeetingProcessingJobPublisher jobPublisher,
+    IMeetingProcessingRequestStore requestStore,
     ILoggerFactory loggerFactory,
     CancellationToken cancellationToken) =>
 {
     var logger = loggerFactory.CreateLogger("ProcessMeetingEndpoint");
     logger.LogInformation("Queue process meeting request received. MeetingId={MeetingId}.", id);
 
-    var meeting = await meetingRepository.GetByIdAsync(id, cancellationToken);
-    if (meeting is null) return Results.NotFound();
-
-    meeting.MarkQueued();
-    await meetingRepository.SaveChangesAsync(cancellationToken);
-
-    await jobPublisher.PublishAsync(
+    var queued = await requestStore.QueueExistingMeetingAsync(
+        id,
         new MeetingProcessingRequested(id, "text", DateTimeOffset.UtcNow),
         cancellationToken);
+
+    if (!queued) return Results.NotFound();
 
     return Results.Accepted($"/meetings/{id}/summary", new { id, status = "Queued" });
 })
