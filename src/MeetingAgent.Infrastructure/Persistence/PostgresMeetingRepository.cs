@@ -110,8 +110,8 @@ public sealed class PostgresMeetingRepository : IMeetingRepository
             AddNullableTimestamp(command, "end_time", meeting.EndTime);
             command.Parameters.AddWithValue("status", (int)meeting.Status);
             AddNullableText(command, "failure_reason", meeting.FailureReason);
-            command.Parameters.AddWithValue("created_at", meeting.CreatedAt);
-            command.Parameters.AddWithValue("updated_at", meeting.UpdatedAt);
+            command.Parameters.AddWithValue("created_at", meeting.CreatedAt.ToUniversalTime());
+            command.Parameters.AddWithValue("updated_at", meeting.UpdatedAt.ToUniversalTime());
 
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
@@ -148,7 +148,7 @@ public sealed class PostgresMeetingRepository : IMeetingRepository
     {
         command.Parameters.Add(new NpgsqlParameter(name, NpgsqlDbType.TimestampTz)
         {
-            Value = value.HasValue ? value.Value : DBNull.Value
+            Value = value.HasValue ? value.Value.ToUniversalTime() : DBNull.Value
         });
     }
 }

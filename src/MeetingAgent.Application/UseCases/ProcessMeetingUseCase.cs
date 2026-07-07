@@ -41,6 +41,9 @@ public sealed class ProcessMeetingUseCase
 
         try
         {
+            meeting.MarkProcessing();
+            await _meetingRepository.SaveChangesAsync(cancellationToken);
+
             var summary = await _workflow.ExecuteAsync(meeting, transcript, sourceFormat, cancellationToken);
             await _summaryRepository.AddOrReplaceAsync(summary, cancellationToken);
             await _transcriptRepository.SaveChangesAsync(cancellationToken);
