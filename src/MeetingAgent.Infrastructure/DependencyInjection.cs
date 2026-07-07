@@ -27,6 +27,9 @@ public static class DependencyInjection
             options.Provider = configuration["AI_PROVIDER"] ?? configuration[$"{AiOptions.SectionName}:Provider"] ?? "heuristic";
             options.Model = configuration["AI_MODEL"] ?? configuration[$"{AiOptions.SectionName}:Model"] ?? "qwen3:8b";
             options.BaseUrl = configuration["AI_BASE_URL"] ?? configuration[$"{AiOptions.SectionName}:BaseUrl"] ?? "http://ollama:11434";
+            options.TimeoutSeconds = int.TryParse(configuration["AI_TIMEOUT_SECONDS"] ?? configuration[$"{AiOptions.SectionName}:TimeoutSeconds"], out var timeoutSeconds)
+                ? timeoutSeconds
+                : 300;
         });
 
         services.Configure<DatabaseOptions>(options =>
@@ -73,7 +76,12 @@ public static class DependencyInjection
             services.AddHttpClient<IAiChatService, OllamaChatService>((sp, client) =>
             {
                 var baseUrl = configuration["AI_BASE_URL"] ?? "http://ollama:11434";
+                var timeoutSeconds = int.TryParse(configuration["AI_TIMEOUT_SECONDS"], out var parsedTimeoutSeconds)
+                    ? parsedTimeoutSeconds
+                    : 300;
+
                 client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromSeconds(Math.Max(30, timeoutSeconds));
             });
         }
         else
