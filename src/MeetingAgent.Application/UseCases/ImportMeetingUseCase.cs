@@ -9,20 +9,14 @@ namespace MeetingAgent.Application.UseCases;
 
 public sealed class ImportMeetingUseCase
 {
-    private readonly IMeetingRepository _meetingRepository;
-    private readonly ITranscriptRepository _transcriptRepository;
-    private readonly IMeetingProcessingJobPublisher _jobPublisher;
+    private readonly IMeetingProcessingRequestStore _requestStore;
     private readonly ILogger<ImportMeetingUseCase> _logger;
 
     public ImportMeetingUseCase(
-        IMeetingRepository meetingRepository,
-        ITranscriptRepository transcriptRepository,
-        IMeetingProcessingJobPublisher jobPublisher,
+        IMeetingProcessingRequestStore requestStore,
         ILogger<ImportMeetingUseCase> logger)
     {
-        _meetingRepository = meetingRepository;
-        _transcriptRepository = transcriptRepository;
-        _jobPublisher = jobPublisher;
+        _requestStore = requestStore;
         _logger = logger;
     }
 
@@ -59,12 +53,9 @@ public sealed class ImportMeetingUseCase
         meeting.MarkTranscriptImported();
         meeting.MarkQueued();
 
-        await _meetingRepository.AddAsync(meeting, cancellationToken);
-        await _transcriptRepository.AddAsync(transcript, cancellationToken);
-        await _meetingRepository.SaveChangesAsync(cancellationToken);
-        await _transcriptRepository.SaveChangesAsync(cancellationToken);
-
-        await _jobPublisher.PublishAsync(
+        await _requestStore.SaveImportedMeetingAndQueueAsync(
+            meeting,
+            transcript,
             new MeetingProcessingRequested(
                 meeting.Id,
                 request.SourceFormat ?? "text",
@@ -72,7 +63,7 @@ public sealed class ImportMeetingUseCase
             cancellationToken);
 
         _logger.LogInformation(
-            "Meeting imported and queued for worker processing. MeetingId={MeetingId}.",
+            "Meeting imported and queued through outbox. MeetingId={MeetingId}.",
             meeting.Id);
 
         return meeting.Id;
